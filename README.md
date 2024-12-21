@@ -4,7 +4,7 @@ https://discord.com/invite/0glabs
 Explorer:https://explorer.corenodehq.com/Pell-Testnet
 1.Installation packages and dependencies
 
-'shell
+'''shell
 sudo apt update && sudo apt upgrade -y
 sudo apt install curl git wget htop tmux build-essential jq make lz4 gcc unzip -y
-'shell
+'''shell
