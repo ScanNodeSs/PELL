@@ -146,3 +146,114 @@ wget https://raw.githubusercontent.com/0xPellNetwork/network-config/refs/heads/m
 curl https://raw.githubusercontent.com/MictoNode/pellnetwork/refs/heads/main/addrbook.json -o ~/.pellcored/config/addrbook.json
 ```
 
+➡️ Indexer
+```shell
+sed -i -e "s/^indexer *=.*/indexer = \"null\"/" $HOME/.pellcored/config/config.toml
+```
+➡️ Gas Settings
+```shell
+sed -i 's|minimum-gas-prices =.*|minimum-gas-prices = "0apell"|g' $HOME/.pellcored/config/app.toml
+```
+
+➡️ Prometheus
+```shell
+sed -i -e "s/prometheus = false/prometheus = true/" $HOME/.pellcored/config/config.toml
+```
+
+➡️ Starter Snap (thx josephtran)
+
+```shell
+pellcored tendermint unsafe-reset-all --home $HOME/.pellcored
+if curl -s --head curl http://37.120.189.81/pell_testnet/pell_snap.lz4 | head -n 1 | grep "200" > /dev/null; then
+  curl http://37.120.189.81/pell_testnet/pell_snap.lz4 | lz4 -dc - | tar -xf - -C $HOME/.pellcored
+    else
+  echo no have snap
+fi
+```
+➡️ Let's get started
+
+```shell
+sudo systemctl restart pellcored
+journalctl -fu pellcored -o cat
+```
+
+➡️ Log Command
+
+```shell
+sudo journalctl -fu pellcored -o cat
+```
+
+
+➡️ Create wallet
+
+```shell
+pellcored keys add wallet-name --keyring-backend=test
+```
+➡️ don't forget to backup the wallet words!
+
+➡️ Import wallet
+```shell
+pellcored keys add wallet-name --recover --keyring-backend=test
+```
+➡️ Create Validator
+Reminder: You can't create a validator without Sync. You must have to catch the latest block.
+
+Save your pubkey
+```shell
+rm -rf /root/validator.json
+sudo tee ./validator.json > /dev/null << EOF
+{
+	"pubkey": $(pellcored tendermint show-validator),
+	"amount": "1000000000000000000apell",
+	"moniker": "<your_node_name>",
+	"identity": "optional identity signature (ex. UPort or Keybase)",
+	"website": "validator's (optional) website",
+	"security": "validator's (optional) security contact email",
+	"details": "validator's (optional) details",
+	"commission-rate": "0.1",
+	"commission-max-rate": "0.2",
+	"commission-max-change-rate": "0.01",
+	"min-self-delegation": "1"
+}
+EOF
+```
+```shell
+pellcored tx staking create-validator ./validator.json --chain-id=ignite_186-1 --fees=0.000001pell --gas=1000000 --from=wallet-name --keyring-backend=test -y
+```
+➡️ Delegate to Yourself
+```shell
+pellcored tx staking delegate $(pellcored keys show wallet-name --bech val -a) 1000000000000000000apell --from wallet-name --chain-id ignite_186-1 --fees=0.000001pell --gas=1000000 --keyring-backend=test -y
+```
+➡️ Edit Validator
+```shell
+pellcored tx staking edit-validator \
+--chain-id ignite_186-1 \
+--commission-rate 0.05 \
+--new-moniker "validator-name" \
+--identity "" \
+--details "" \
+--website "" \
+--security-contact "" \
+--from "wallet-name" \
+--node http://localhost:${PELL_PORT}657 \
+--fees=0.000001pell \
+--gas=1000000 \
+--keyring-backend=test
+-y
+```
+➡️ Complete deletion
+```shell
+cd $HOME
+sudo systemctl stop pellcored
+sudo systemctl disable pellcored
+sudo rm -rf /etc/systemd/system/pellcored.service
+sudo systemctl daemon-reload
+sudo rm -f /usr/local/bin/pellcored
+sudo rm -f $(which pellcored)
+sudo rm -rf $HOME/.pellcored
+sed -i "/PELL_PORT_/d" $HOME/.bash_profile
+```
+➡️ Block check
+```shell
+local_height=$(curl -s localhost:${PELL_PORT}657/status | jq -r .result.sync_info.latest_block_height); network_height=$(curl -s https://pell-testnet-rpc.mictonode.com/status | jq -r .result.sync_info.latest_block_height); blocks_left=$((network_height - local_height)); echo "Your node height: $local_height"; echo "Network height: $network_height"; echo "Blocks left: $blocks_left"
+```
