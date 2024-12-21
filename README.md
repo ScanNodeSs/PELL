@@ -1,7 +1,13 @@
 # PELL
 ![image](https://github.com/user-attachments/assets/62eaa453-7b3c-442e-9c4e-5b2ef993d10c)
-https://discord.com/invite/0glabs
+
+
+
+
 Explorer:https://explorer.corenodehq.com/Pell-Testnet
+
+
+
 1.Installation packages and dependencies
 
 ```shell
